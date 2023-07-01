@@ -17,20 +17,23 @@ defmodule Labyrinth do
   @doc """
   Shuffles the movable tiles and treasures and places them on a grid.
 
+  The grid is a multi dimensional list of 7 rows and 7 columns.
+  Each position is represented by as a tuple {tile, treasure}.
+  Each tile is represented by a binary number, where each bit represents
+  the possible directions of travel, north, south, east or west.
+
   ## Examples
 
-      iex> Labyrinth.hello()
-      :world
-
+      iex> %{grid: _, next_tile: _} = Labyrinth.init()
   """
   def init do
     shuffled_tiles = shuffle_tiles()
-    initial_grid = grid(shuffled_tiles)
+    initial_grid = gen_grid(shuffled_tiles)
     next_tile = Enum.at(shuffled_tiles, 33)
     %{grid: initial_grid, next_tile: next_tile}
   end
 
-  def grid(shuffled_tiles) do
+  defp gen_grid(shuffled_tiles) do
     get_tile = fn index -> Enum.at(shuffled_tiles, index) end
 
     [
@@ -102,46 +105,46 @@ defmodule Labyrinth do
 
   def draw_grid(grid), do: Enum.map_join(grid, "\n", &draw_row/1)
 
-  def draw_row(row), do: Enum.map_join(row, &draw_tile/1)
+  defp draw_row(row), do: Enum.map_join(row, &draw_tile/1)
 
-  def draw_tile(0b1010), do: "┃"
-  def draw_tile(0b0101), do: "━"
-  def draw_tile(0b1100), do: "┗"
-  def draw_tile(0b0110), do: "┏"
-  def draw_tile(0b0011), do: "┓"
-  def draw_tile(0b1001), do: "┛"
-  def draw_tile(0b1101), do: "┻"
-  def draw_tile(0b1110), do: "┣"
-  def draw_tile(0b0111), do: "┳"
-  def draw_tile(0b1011), do: "┫"
-  def draw_tile({tile, _}), do: draw_tile(tile)
+  defp draw_tile(0b1010), do: "┃"
+  defp draw_tile(0b0101), do: "━"
+  defp draw_tile(0b1100), do: "┗"
+  defp draw_tile(0b0110), do: "┏"
+  defp draw_tile(0b0011), do: "┓"
+  defp draw_tile(0b1001), do: "┛"
+  defp draw_tile(0b1101), do: "┻"
+  defp draw_tile(0b1110), do: "┣"
+  defp draw_tile(0b0111), do: "┳"
+  defp draw_tile(0b1011), do: "┫"
+  defp draw_tile({tile, _}), do: draw_tile(tile)
 
-  def draw_treasure(nil), do: "."
-  def draw_treasure(0), do: "🔑"
-  def draw_treasure(1), do: "🔫"
-  def draw_treasure(2), do: "📱"
-  def draw_treasure(3), do: "💎"
-  def draw_treasure(4), do: "⌛️"
-  def draw_treasure(5), do: "🔪"
-  def draw_treasure(6), do: "🪬"
-  def draw_treasure(7), do: "🪥"
-  def draw_treasure(8), do: "🎈"
-  def draw_treasure(9), do: "✂️"
-  def draw_treasure(10), do: "♟️"
-  def draw_treasure(11), do: "🪃"
-  def draw_treasure(12), do: "🍕"
-  def draw_treasure(13), do: "🐢"
-  def draw_treasure(14), do: "💍"
-  def draw_treasure(15), do: "🍸"
-  def draw_treasure(16), do: "🛹"
-  def draw_treasure(17), do: "🥊"
-  def draw_treasure(18), do: "🪈"
-  def draw_treasure(19), do: "🛴"
-  def draw_treasure(20), do: "🧯"
-  def draw_treasure(21), do: "🧪"
-  def draw_treasure(22), do: "🏹"
-  def draw_treasure(23), do: "🧩"
-  def draw_treasure({_, treasure}), do: draw_treasure(treasure)
+  defp draw_treasure(nil), do: "."
+  defp draw_treasure(0), do: "🔑"
+  defp draw_treasure(1), do: "🔫"
+  defp draw_treasure(2), do: "📱"
+  defp draw_treasure(3), do: "💎"
+  defp draw_treasure(4), do: "⌛️"
+  defp draw_treasure(5), do: "🔪"
+  defp draw_treasure(6), do: "🪬"
+  defp draw_treasure(7), do: "🪥"
+  defp draw_treasure(8), do: "🎈"
+  defp draw_treasure(9), do: "✂️"
+  defp draw_treasure(10), do: "♟️"
+  defp draw_treasure(11), do: "🪃"
+  defp draw_treasure(12), do: "🍕"
+  defp draw_treasure(13), do: "🐢"
+  defp draw_treasure(14), do: "💍"
+  defp draw_treasure(15), do: "🍸"
+  defp draw_treasure(16), do: "🛹"
+  defp draw_treasure(17), do: "🥊"
+  defp draw_treasure(18), do: "🪈"
+  defp draw_treasure(19), do: "🛴"
+  defp draw_treasure(20), do: "🧯"
+  defp draw_treasure(21), do: "🧪"
+  defp draw_treasure(22), do: "🏹"
+  defp draw_treasure(23), do: "🧩"
+  defp draw_treasure({_, treasure}), do: draw_treasure(treasure)
 
   defp shuffle_tiles do
     # A tile can have up to 4 walls on either side
