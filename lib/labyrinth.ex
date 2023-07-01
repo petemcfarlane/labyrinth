@@ -1,10 +1,21 @@
 defmodule Labyrinth do
   @moduledoc """
-  Documentation for `Labyrinth`.
+  Labyrinth is a board game consisting of a grid with 16 fixed tiles,
+  34 movable tiles and 24 treasure cards. Traditionally there are 4
+  players, each starting in a corner. The treasure cards are shuffled
+  and dealt at the start of the game. The objective of the game is to
+  be the first player to collect all of your treasure cards by visiting
+  the tile with your treasure.
+  On a players go, they must insert the spare tile into the grid,
+  sliding the entire row or column along by one. Then they must move
+  their pawn but only by 1 square, and only in the directions permitted
+  by the current tile and relative surrounding tiles.
+  If a pawn is moved off the end of a row or coluumn, it reappears on
+  the newly inserted tile on the opposite side of the grid.
   """
 
   @doc """
-  Hello world.
+  Shuffles the movable tiles and treasures and places them on a grid.
 
   ## Examples
 
@@ -12,10 +23,6 @@ defmodule Labyrinth do
       :world
 
   """
-  def hello do
-    :world
-  end
-
   def init do
     shuffled_tiles = shuffle_tiles()
     initial_grid = grid(shuffled_tiles)
@@ -24,17 +31,6 @@ defmodule Labyrinth do
   end
 
   def grid(shuffled_tiles) do
-    # A tile can have up to 4 walls on either side
-    # we can represent this as a 4 bit integer
-    # 1111 NESW all walls
-    # 1010 N S north to south, straight
-    # 1100 NE  north to east, corner
-    # 0111  ESW east, south, west, T shape
-
-    # 13 straight tiles
-    # 6 T tiles
-    # 15 corner tiles
-
     get_tile = fn index -> Enum.at(shuffled_tiles, index) end
 
     [
@@ -106,7 +102,7 @@ defmodule Labyrinth do
 
   def draw_grid(grid), do: Enum.map_join(grid, "\n", &draw_row/1)
 
-  def draw_row(row), do: Enum.map_join(row, &draw_object/1)
+  def draw_row(row), do: Enum.map_join(row, &draw_tile/1)
 
   def draw_tile(0b1010), do: "┃"
   def draw_tile(0b0101), do: "━"
@@ -120,34 +116,45 @@ defmodule Labyrinth do
   def draw_tile(0b1011), do: "┫"
   def draw_tile({tile, _}), do: draw_tile(tile)
 
-  def draw_object(nil), do: "."
-  def draw_object(0), do: "🔑"
-  def draw_object(1), do: "🔫"
-  def draw_object(2), do: "📱"
-  def draw_object(3), do: "💎"
-  def draw_object(4), do: "⌛️"
-  def draw_object(5), do: "🔪"
-  def draw_object(6), do: "🪬"
-  def draw_object(7), do: "🪥"
-  def draw_object(8), do: "🎈"
-  def draw_object(9), do: "✂️"
-  def draw_object(10), do: "♟️"
-  def draw_object(11), do: "🪃"
-  def draw_object(12), do: "🍕"
-  def draw_object(13), do: "🐢"
-  def draw_object(14), do: "💍"
-  def draw_object(15), do: "🍸"
-  def draw_object(16), do: "🛹"
-  def draw_object(17), do: "🥊"
-  def draw_object(18), do: "🪈"
-  def draw_object(19), do: "🛴"
-  def draw_object(20), do: "🧯"
-  def draw_object(21), do: "🧪"
-  def draw_object(22), do: "🏹"
-  def draw_object(23), do: "🧩"
-  def draw_object({_, object}), do: draw_object(object)
+  def draw_treasure(nil), do: "."
+  def draw_treasure(0), do: "🔑"
+  def draw_treasure(1), do: "🔫"
+  def draw_treasure(2), do: "📱"
+  def draw_treasure(3), do: "💎"
+  def draw_treasure(4), do: "⌛️"
+  def draw_treasure(5), do: "🔪"
+  def draw_treasure(6), do: "🪬"
+  def draw_treasure(7), do: "🪥"
+  def draw_treasure(8), do: "🎈"
+  def draw_treasure(9), do: "✂️"
+  def draw_treasure(10), do: "♟️"
+  def draw_treasure(11), do: "🪃"
+  def draw_treasure(12), do: "🍕"
+  def draw_treasure(13), do: "🐢"
+  def draw_treasure(14), do: "💍"
+  def draw_treasure(15), do: "🍸"
+  def draw_treasure(16), do: "🛹"
+  def draw_treasure(17), do: "🥊"
+  def draw_treasure(18), do: "🪈"
+  def draw_treasure(19), do: "🛴"
+  def draw_treasure(20), do: "🧯"
+  def draw_treasure(21), do: "🧪"
+  def draw_treasure(22), do: "🏹"
+  def draw_treasure(23), do: "🧩"
+  def draw_treasure({_, treasure}), do: draw_treasure(treasure)
 
   defp shuffle_tiles do
+    # A tile can have up to 4 walls on either side
+    # we can represent this as a 4 bit integer
+    # 1111 NESW all walls
+    # 1010 N S north to south, straight
+    # 1100 NE  north to east, corner
+    # 0111  ESW east, south, west, T shape
+
+    # 13 straight tiles
+    # 6 T tiles
+    # 15 corner tiles
+    # 8 treasures
     (gen_tiles(:straight, 13) ++
        gen_tiles(:T, 6) ++
        gen_tiles(:corner, 15))
@@ -165,7 +172,7 @@ defmodule Labyrinth do
     |> Enum.take(amount)
   end
 
-  defp gen_tile(dir, object), do: {gen_tile(dir), object}
+  defp gen_tile(dir, treasure), do: {gen_tile(dir), treasure}
 
   defp gen_tile(:straight) do
     Enum.random([gen_tile(:NS), gen_tile(:EW)])
