@@ -26,84 +26,193 @@ defmodule Labyrinth do
 
       iex> %{grid: _, next_tile: _} = Labyrinth.init()
   """
-  def init do
+  def init(players) when length(players) >= 2 and length(players) <= 24 do
+    num_of_players = players |> length()
+    amount_of_treasure = div(24, num_of_players)
     shuffled_tiles = shuffle_tiles()
     initial_grid = gen_grid(shuffled_tiles)
     next_tile = Enum.at(shuffled_tiles, 33)
-    %{grid: initial_grid, next_tile: next_tile}
+    shuffled_treasure = 0..23 |> Enum.to_list() |> Enum.shuffle()
+    pawns = Enum.shuffle(["🤠", "👽", "👾", "🤖", "🥷", "🦸", "🧙", "🦹", "🧜"])
+
+    players =
+      players
+      |> Enum.with_index()
+      |> Enum.map(fn {name, i} ->
+        %{
+          name: name,
+          remaining_treasure:
+            Enum.slice(
+              shuffled_treasure,
+              i * amount_of_treasure,
+              amount_of_treasure
+            ),
+          found_treasure: [],
+          pawn: Enum.at(pawns, i),
+          position:
+            case rem(i, 4) do
+              0 -> [0, 0]
+              1 -> [6, 0]
+              2 -> [6, 6]
+              3 -> [0, 6]
+            end
+        }
+      end)
+
+    %{grid: initial_grid, next_tile: next_tile, players: players}
+  end
+
+  def insert_tile(grid, tile, 0), do: move_column_down(grid, tile, 1)
+  def insert_tile(grid, tile, 1), do: move_column_down(grid, tile, 3)
+  def insert_tile(grid, tile, 2), do: move_column_down(grid, tile, 5)
+  def insert_tile(grid, tile, 3), do: move_row_to_left(grid, tile, 1)
+  def insert_tile(grid, tile, 4), do: move_row_to_left(grid, tile, 3)
+  def insert_tile(grid, tile, 5), do: move_row_to_left(grid, tile, 5)
+  def insert_tile(grid, tile, 6), do: move_column_up(grid, tile, 5)
+  def insert_tile(grid, tile, 7), do: move_column_up(grid, tile, 3)
+  def insert_tile(grid, tile, 8), do: move_column_up(grid, tile, 1)
+  def insert_tile(grid, tile, 9), do: move_row_to_right(grid, tile, 5)
+  def insert_tile(grid, tile, 10), do: move_row_to_right(grid, tile, 3)
+  def insert_tile(grid, tile, 11), do: move_row_to_right(grid, tile, 1)
+
+  defp move_column_down(grid, tile, column_index) do
+    new_spare_tile = Map.get(grid, {6, column_index})
+
+    new_grid =
+      grid
+      |> Map.replace!({0, column_index}, tile)
+      |> Map.replace!({1, column_index}, Map.get(grid, {0, column_index}))
+      |> Map.replace!({2, column_index}, Map.get(grid, {1, column_index}))
+      |> Map.replace!({3, column_index}, Map.get(grid, {2, column_index}))
+      |> Map.replace!({4, column_index}, Map.get(grid, {3, column_index}))
+      |> Map.replace!({5, column_index}, Map.get(grid, {4, column_index}))
+      |> Map.replace!({6, column_index}, Map.get(grid, {5, column_index}))
+
+    {new_grid, new_spare_tile}
+  end
+
+  defp move_column_up(grid, tile, column_index) do
+    new_spare_tile = Map.get(grid, {0, column_index})
+
+    new_grid =
+      grid
+      |> Map.replace!({6, column_index}, tile)
+      |> Map.replace!({5, column_index}, Map.get(grid, {6, column_index}))
+      |> Map.replace!({4, column_index}, Map.get(grid, {5, column_index}))
+      |> Map.replace!({3, column_index}, Map.get(grid, {4, column_index}))
+      |> Map.replace!({2, column_index}, Map.get(grid, {3, column_index}))
+      |> Map.replace!({1, column_index}, Map.get(grid, {2, column_index}))
+      |> Map.replace!({0, column_index}, Map.get(grid, {1, column_index}))
+
+    {new_grid, new_spare_tile}
+  end
+
+  defp move_row_to_right(grid, tile, row_index) do
+    new_spare_tile = Map.get(grid, {row_index, 6})
+
+    new_grid =
+      grid
+      |> Map.replace!({row_index, 0}, tile)
+      |> Map.replace!({row_index, 1}, Map.get(grid, {row_index, 0}))
+      |> Map.replace!({row_index, 2}, Map.get(grid, {row_index, 1}))
+      |> Map.replace!({row_index, 3}, Map.get(grid, {row_index, 2}))
+      |> Map.replace!({row_index, 4}, Map.get(grid, {row_index, 3}))
+      |> Map.replace!({row_index, 5}, Map.get(grid, {row_index, 4}))
+      |> Map.replace!({row_index, 6}, Map.get(grid, {row_index, 5}))
+
+    {new_grid, new_spare_tile}
+  end
+
+  defp move_row_to_left(grid, tile, row_index) do
+    new_spare_tile = Map.get(grid, {row_index, 0})
+
+    new_grid =
+      grid
+      |> Map.replace!({row_index, 6}, tile)
+      |> Map.replace!({row_index, 5}, Map.get(grid, {row_index, 6}))
+      |> Map.replace!({row_index, 4}, Map.get(grid, {row_index, 5}))
+      |> Map.replace!({row_index, 3}, Map.get(grid, {row_index, 4}))
+      |> Map.replace!({row_index, 2}, Map.get(grid, {row_index, 3}))
+      |> Map.replace!({row_index, 1}, Map.get(grid, {row_index, 2}))
+      |> Map.replace!({row_index, 0}, Map.get(grid, {row_index, 1}))
+
+    {new_grid, new_spare_tile}
   end
 
   defp gen_grid(shuffled_tiles) do
     get_tile = fn index -> Enum.at(shuffled_tiles, index) end
 
-    [
-      [
-        gen_tile(:ES, 8),
-        get_tile.(0),
-        gen_tile(:ESW, 9),
-        get_tile.(1),
-        gen_tile(:ESW, 10),
-        get_tile.(2),
-        gen_tile(:SW, 11)
-      ],
-      [
-        get_tile.(3),
-        get_tile.(4),
-        get_tile.(5),
-        get_tile.(6),
-        get_tile.(7),
-        get_tile.(8),
-        get_tile.(9)
-      ],
-      [
-        gen_tile(:NES, 12),
-        get_tile.(10),
-        gen_tile(:NES, 13),
-        get_tile.(11),
-        gen_tile(:ESW, 14),
-        get_tile.(12),
-        gen_tile(:NSW, 15)
-      ],
-      [
-        get_tile.(13),
-        get_tile.(14),
-        get_tile.(15),
-        get_tile.(16),
-        get_tile.(17),
-        get_tile.(18),
-        get_tile.(19)
-      ],
-      [
-        gen_tile(:NES, 16),
-        get_tile.(20),
-        gen_tile(:NEW, 17),
-        get_tile.(21),
-        gen_tile(:NSW, 18),
-        get_tile.(22),
-        gen_tile(:NSW, 19)
-      ],
-      [
-        get_tile.(23),
-        get_tile.(24),
-        get_tile.(25),
-        get_tile.(26),
-        get_tile.(27),
-        get_tile.(28),
-        get_tile.(29)
-      ],
-      [
-        gen_tile(:NE, 20),
-        get_tile.(30),
-        gen_tile(:NEW, 21),
-        get_tile.(31),
-        gen_tile(:NEW, 22),
-        get_tile.(32),
-        gen_tile(:NW, 23)
-      ]
-    ]
+    %{
+      {0, 0} => gen_tile(:ES, 8),
+      {0, 1} => get_tile.(0),
+      {0, 2} => gen_tile(:ESW, 9),
+      {0, 3} => get_tile.(1),
+      {0, 4} => gen_tile(:ESW, 10),
+      {0, 5} => get_tile.(2),
+      {0, 6} => gen_tile(:SW, 11),
+      {1, 0} => get_tile.(3),
+      {1, 1} => get_tile.(4),
+      {1, 2} => get_tile.(5),
+      {1, 3} => get_tile.(6),
+      {1, 4} => get_tile.(7),
+      {1, 5} => get_tile.(8),
+      {1, 6} => get_tile.(9),
+      {2, 0} => gen_tile(:NES, 12),
+      {2, 1} => get_tile.(10),
+      {2, 2} => gen_tile(:NES, 13),
+      {2, 3} => get_tile.(11),
+      {2, 4} => gen_tile(:ESW, 14),
+      {2, 5} => get_tile.(12),
+      {2, 6} => gen_tile(:NSW, 15),
+      {3, 0} => get_tile.(13),
+      {3, 1} => get_tile.(14),
+      {3, 2} => get_tile.(15),
+      {3, 3} => get_tile.(16),
+      {3, 4} => get_tile.(17),
+      {3, 5} => get_tile.(18),
+      {3, 6} => get_tile.(19),
+      {4, 0} => gen_tile(:NES, 16),
+      {4, 1} => get_tile.(20),
+      {4, 2} => gen_tile(:NEW, 17),
+      {4, 3} => get_tile.(21),
+      {4, 4} => gen_tile(:NSW, 18),
+      {4, 5} => get_tile.(22),
+      {4, 6} => gen_tile(:NSW, 19),
+      {5, 0} => get_tile.(23),
+      {5, 1} => get_tile.(24),
+      {5, 2} => get_tile.(25),
+      {5, 3} => get_tile.(26),
+      {5, 4} => get_tile.(27),
+      {5, 5} => get_tile.(28),
+      {5, 6} => get_tile.(29),
+      {6, 0} => gen_tile(:NE, 20),
+      {6, 1} => get_tile.(30),
+      {6, 2} => gen_tile(:NEW, 21),
+      {6, 3} => get_tile.(31),
+      {6, 4} => gen_tile(:NEW, 22),
+      {6, 5} => get_tile.(32),
+      {6, 6} => gen_tile(:NW, 23)
+    }
   end
 
-  def draw_grid(grid), do: Enum.map_join(grid, "\n", &draw_row/1)
+  def draw_labyrinth({grid, next_tile}) do
+    draw_labyrinth(grid)
+    IO.puts("Next tile: #{draw_tile(next_tile)}")
+    {grid, next_tile}
+  end
+
+  def draw_labyrinth(grid) do
+    grid
+    |> Enum.group_by(fn {{x, _y}, _} -> x end)
+    |> Map.values()
+    |> Enum.map(fn row ->
+      row |> Enum.sort_by(fn {{_x, y}, _tile} -> y end) |> Enum.map(fn {_xy, tile} -> tile end)
+    end)
+    |> Enum.map_join("\n", &draw_row/1)
+    |> IO.puts()
+
+    grid
+  end
 
   defp draw_row(row), do: Enum.map_join(row, &draw_tile/1)
 
