@@ -31,9 +31,6 @@ defmodule Labyrinth do
   def init(players) when length(players) >= 2 and length(players) <= 24 do
     num_of_players = players |> length()
     amount_of_treasure = div(24, num_of_players)
-    shuffled_tiles = Board.shuffle_tiles()
-    initial_grid = Board.init(shuffled_tiles)
-    next_tile = Enum.at(shuffled_tiles, 33)
     shuffled_treasure = 0..23 |> Enum.to_list() |> Enum.shuffle()
     pawns = Enum.shuffle(["🤠", "👽", "👾", "🤖", "🥷", "🦸", "🧙", "🦹", "🧜"])
 
@@ -53,14 +50,23 @@ defmodule Labyrinth do
           pawn: Enum.at(pawns, i),
           position:
             case rem(i, 4) do
-              0 -> [0, 0]
-              1 -> [6, 0]
-              2 -> [6, 6]
-              3 -> [0, 6]
+              0 -> {0, 0}
+              1 -> {6, 0}
+              2 -> {6, 6}
+              3 -> {0, 6}
             end
         }
       end)
 
-    %{grid: initial_grid, next_tile: next_tile, players: players}
+    shuffled_tiles = Board.shuffle_tiles()
+    initial_grid = Board.init(shuffled_tiles)
+    grid = Board.place_players_on_grid(initial_grid, players)
+    next_tile = Enum.at(shuffled_tiles, 33)
+
+    %{
+      grid: grid,
+      next_tile: next_tile,
+      players: players
+    }
   end
 end

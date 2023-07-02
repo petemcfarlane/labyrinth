@@ -84,6 +84,19 @@ defmodule Labyrinth.Board do
     }
   end
 
+  def place_players_on_grid(grid, players) do
+    Enum.reduce(players, grid, fn
+      player, grid -> place_player_on_grid(grid, player)
+    end)
+  end
+
+  defp place_player_on_grid(grid, player) do
+    Map.update!(grid, player.position, fn
+      {tile, treasure} -> {tile, treasure, [player]}
+      {tile, treasure, players} -> {tile, treasure, [player | players]}
+    end)
+  end
+
   defp gen_tile(dir, treasure), do: {gen_tile(dir), treasure}
 
   defp gen_tile(:straight) do
