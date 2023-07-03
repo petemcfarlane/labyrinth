@@ -59,8 +59,11 @@ defmodule Labyrinth do
       end)
 
     shuffled_tiles = Board.shuffle_tiles()
-    initial_grid = Board.init(shuffled_tiles)
-    grid = Board.place_players_on_grid(initial_grid, players)
+
+    grid =
+      Board.init(shuffled_tiles)
+      |> Board.place_players_on_grid(players)
+
     next_tile = Enum.at(shuffled_tiles, 33)
 
     %{

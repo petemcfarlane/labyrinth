@@ -154,67 +154,87 @@ defmodule Labyrinth.Board do
   def insert_tile(grid, tile, 11), do: move_row_to_right(grid, tile, 1)
 
   defp move_column_down(grid, tile, column_index) do
-    new_spare_tile = Map.get(grid, {6, column_index})
+    {new_spare_tile, tile} = move_players_from_old_tile_to_new(grid, {column_index, 6}, tile)
 
     new_grid =
       grid
-      |> Map.replace!({0, column_index}, tile)
-      |> Map.replace!({1, column_index}, Map.get(grid, {0, column_index}))
-      |> Map.replace!({2, column_index}, Map.get(grid, {1, column_index}))
-      |> Map.replace!({3, column_index}, Map.get(grid, {2, column_index}))
-      |> Map.replace!({4, column_index}, Map.get(grid, {3, column_index}))
-      |> Map.replace!({5, column_index}, Map.get(grid, {4, column_index}))
-      |> Map.replace!({6, column_index}, Map.get(grid, {5, column_index}))
+      |> Map.replace!({column_index, 0}, tile)
+      |> Map.replace!({column_index, 1}, Map.get(grid, {column_index, 0}))
+      |> Map.replace!({column_index, 2}, Map.get(grid, {column_index, 1}))
+      |> Map.replace!({column_index, 3}, Map.get(grid, {column_index, 2}))
+      |> Map.replace!({column_index, 4}, Map.get(grid, {column_index, 3}))
+      |> Map.replace!({column_index, 5}, Map.get(grid, {column_index, 4}))
+      |> Map.replace!({column_index, 6}, Map.get(grid, {column_index, 5}))
 
     {new_grid, new_spare_tile}
   end
 
   defp move_column_up(grid, tile, column_index) do
-    new_spare_tile = Map.get(grid, {0, column_index})
+    {new_spare_tile, tile} = move_players_from_old_tile_to_new(grid, {column_index, 0}, tile)
 
     new_grid =
       grid
-      |> Map.replace!({6, column_index}, tile)
-      |> Map.replace!({5, column_index}, Map.get(grid, {6, column_index}))
-      |> Map.replace!({4, column_index}, Map.get(grid, {5, column_index}))
-      |> Map.replace!({3, column_index}, Map.get(grid, {4, column_index}))
-      |> Map.replace!({2, column_index}, Map.get(grid, {3, column_index}))
-      |> Map.replace!({1, column_index}, Map.get(grid, {2, column_index}))
-      |> Map.replace!({0, column_index}, Map.get(grid, {1, column_index}))
+      |> Map.replace!({column_index, 6}, tile)
+      |> Map.replace!({column_index, 5}, Map.get(grid, {column_index, 6}))
+      |> Map.replace!({column_index, 4}, Map.get(grid, {column_index, 5}))
+      |> Map.replace!({column_index, 3}, Map.get(grid, {column_index, 4}))
+      |> Map.replace!({column_index, 2}, Map.get(grid, {column_index, 3}))
+      |> Map.replace!({column_index, 1}, Map.get(grid, {column_index, 2}))
+      |> Map.replace!({column_index, 0}, Map.get(grid, {column_index, 1}))
 
     {new_grid, new_spare_tile}
   end
 
   defp move_row_to_right(grid, tile, row_index) do
-    new_spare_tile = Map.get(grid, {row_index, 6})
+    {new_spare_tile, tile} = move_players_from_old_tile_to_new(grid, {6, row_index}, tile)
 
     new_grid =
       grid
-      |> Map.replace!({row_index, 0}, tile)
-      |> Map.replace!({row_index, 1}, Map.get(grid, {row_index, 0}))
-      |> Map.replace!({row_index, 2}, Map.get(grid, {row_index, 1}))
-      |> Map.replace!({row_index, 3}, Map.get(grid, {row_index, 2}))
-      |> Map.replace!({row_index, 4}, Map.get(grid, {row_index, 3}))
-      |> Map.replace!({row_index, 5}, Map.get(grid, {row_index, 4}))
-      |> Map.replace!({row_index, 6}, Map.get(grid, {row_index, 5}))
+      |> Map.replace!({0, row_index}, tile)
+      |> Map.replace!({1, row_index}, Map.get(grid, {0, row_index}))
+      |> Map.replace!({2, row_index}, Map.get(grid, {1, row_index}))
+      |> Map.replace!({3, row_index}, Map.get(grid, {2, row_index}))
+      |> Map.replace!({4, row_index}, Map.get(grid, {3, row_index}))
+      |> Map.replace!({5, row_index}, Map.get(grid, {4, row_index}))
+      |> Map.replace!({6, row_index}, Map.get(grid, {5, row_index}))
 
     {new_grid, new_spare_tile}
   end
 
   defp move_row_to_left(grid, tile, row_index) do
-    new_spare_tile = Map.get(grid, {row_index, 0})
+    {new_spare_tile, tile} = move_players_from_old_tile_to_new(grid, {0, row_index}, tile)
 
     new_grid =
       grid
-      |> Map.replace!({row_index, 6}, tile)
-      |> Map.replace!({row_index, 5}, Map.get(grid, {row_index, 6}))
-      |> Map.replace!({row_index, 4}, Map.get(grid, {row_index, 5}))
-      |> Map.replace!({row_index, 3}, Map.get(grid, {row_index, 4}))
-      |> Map.replace!({row_index, 2}, Map.get(grid, {row_index, 3}))
-      |> Map.replace!({row_index, 1}, Map.get(grid, {row_index, 2}))
-      |> Map.replace!({row_index, 0}, Map.get(grid, {row_index, 1}))
+      |> Map.replace!({6, row_index}, tile)
+      |> Map.replace!({5, row_index}, Map.get(grid, {6, row_index}))
+      |> Map.replace!({4, row_index}, Map.get(grid, {5, row_index}))
+      |> Map.replace!({3, row_index}, Map.get(grid, {4, row_index}))
+      |> Map.replace!({2, row_index}, Map.get(grid, {3, row_index}))
+      |> Map.replace!({1, row_index}, Map.get(grid, {2, row_index}))
+      |> Map.replace!({0, row_index}, Map.get(grid, {1, row_index}))
 
     {new_grid, new_spare_tile}
+  end
+
+  def move_players_from_old_tile_to_new(grid, index, tile_to_insert) do
+    {new_spare_tile, players} =
+      case Map.get(grid, index) do
+        {tile, treasure, players} -> {{tile, treasure}, players}
+        {tile, treasure} -> {{tile, treasure}, nil}
+      end
+
+    tile_to_insert =
+      case players do
+        nil ->
+          tile_to_insert
+
+        players ->
+          {tile, treasure} = tile_to_insert
+          {tile, treasure, players}
+      end
+
+    {new_spare_tile, tile_to_insert}
   end
 
   def draw_labyrinth({grid, next_tile}) do
@@ -225,10 +245,10 @@ defmodule Labyrinth.Board do
 
   def draw_labyrinth(grid) do
     grid
-    |> Enum.group_by(fn {{x, _y}, _} -> x end)
+    |> Enum.group_by(fn {{_x, y}, _} -> y end)
     |> Map.values()
     |> Enum.map(fn row ->
-      row |> Enum.sort_by(fn {{_x, y}, _tile} -> y end) |> Enum.map(fn {_xy, tile} -> tile end)
+      row |> Enum.sort_by(fn {{x, _y}, _tile} -> x end) |> Enum.map(fn {_xy, tile} -> tile end)
     end)
     |> Enum.map_join("\n", &draw_row/1)
     |> IO.puts()
@@ -249,6 +269,8 @@ defmodule Labyrinth.Board do
   defp draw_tile(0b0111), do: "┳"
   defp draw_tile(0b1011), do: "┫"
   defp draw_tile({tile, _}), do: draw_tile(tile)
+  defp draw_tile({_tile, _, [%{pawn: pawn}]}), do: pawn
+  defp draw_tile({tile, _, _}), do: draw_tile(tile)
 
   defp draw_treasure(nil), do: "."
   defp draw_treasure(0), do: "🔑"
