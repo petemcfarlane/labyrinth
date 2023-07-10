@@ -1,4 +1,6 @@
 defmodule Labyrinth.Board do
+  import Bitwise
+
   @doc """
    A tile can have up to 4 walls on either side
    we can represent this as a 4 bit integer
@@ -22,8 +24,8 @@ defmodule Labyrinth.Board do
        gen_tiles(:corner, 15))
     |> Enum.shuffle()
     |> Enum.with_index(fn
-      tile, index when index < 8 -> {tile, index}
-      tile, _index -> {tile, nil}
+      tile, index when index < 8 -> {tile, index, []}
+      tile, _index -> {tile, nil, []}
     end)
     |> Enum.shuffle()
   end
@@ -92,12 +94,11 @@ defmodule Labyrinth.Board do
 
   defp place_player_on_grid(grid, player) do
     Map.update!(grid, player.position, fn
-      {tile, treasure} -> {tile, treasure, [player]}
       {tile, treasure, players} -> {tile, treasure, [player | players]}
     end)
   end
 
-  defp gen_tile(dir, treasure), do: {gen_tile(dir), treasure}
+  defp gen_tile(dir, treasure, players \\ []), do: {gen_tile(dir), treasure, players}
 
   defp gen_tile(:straight) do
     Enum.random([gen_tile(:NS), gen_tile(:EW)])
@@ -217,25 +218,61 @@ defmodule Labyrinth.Board do
     {new_grid, new_spare_tile}
   end
 
-  def move_players_from_old_tile_to_new(grid, index, tile_to_insert) do
-    {new_spare_tile, players} =
-      case Map.get(grid, index) do
-        {tile, treasure, players} -> {{tile, treasure}, players}
-        {tile, treasure} -> {{tile, treasure}, nil}
-      end
+  defp move_players_from_old_tile_to_new(grid, index, tile_to_insert) do
+    {tile, treasure, players_to_move} = Map.get(grid, index)
+    new_spare_tile = {tile, treasure, []}
 
-    tile_to_insert =
-      case players do
-        nil ->
-          tile_to_insert
-
-        players ->
-          {tile, treasure} = tile_to_insert
-          {tile, treasure, players}
-      end
+    {tile, treasure, _} = tile_to_insert
+    tile_to_insert = {tile, treasure, players_to_move}
 
     {new_spare_tile, tile_to_insert}
   end
+
+  def move_player!(grid, player, direction) do
+    # check player is on grid at position
+    {tile, treasure, players} = grid[player.position]
+
+    if player not in players do
+      raise "Player not on grid at expected position,
+      #{inspect(player)},
+      players at #{inspect(player.position)}: #{inspect(players)}"
+    end
+
+    # can player move in direction based on the tile they are on?
+    case {direction, player.position, tile} do
+      {:up, {_x, y}, tile} when y == 0 or (tile &&& 0b1000) == 0 ->
+        raise "Cannot move up!"
+
+      {:right, {x, _y}, tile} when x == 6 or (tile &&& 0b0100) == 0 ->
+        raise "Cannot move right!"
+
+      {:down, {_x, y}, tile} when y == 6 or (tile &&& 0b0010) == 0 ->
+        raise "Cannot move down!"
+
+      {:left, {x, _y}, tile} when x == 0 or (tile &&& 0b0001) == 0 ->
+        raise "Cannot move left!"
+
+      _ ->
+        :ok
+    end
+
+    # remove player from old tile
+    old_tile = {tile, treasure, players -- [player]}
+    grid = Map.replace!(grid, player.position, old_tile)
+    # update player position,
+
+    new_position = move_position(player.position, direction)
+    player = %{player | position: new_position}
+    # place player on new tile
+    Map.update!(grid, new_position, fn {tile, treasure, players} ->
+      {tile, treasure, [player | players]}
+    end)
+  end
+
+  defp move_position({x, y}, :up), do: {x, y - 1}
+  defp move_position({x, y}, :right), do: {x + 1, y}
+  defp move_position({x, y}, :down), do: {x, y + 1}
+  defp move_position({x, y}, :left), do: {x - 1, y}
 
   def draw_labyrinth({grid, next_tile}) do
     draw_labyrinth(grid)
@@ -268,9 +305,8 @@ defmodule Labyrinth.Board do
   defp draw_tile(0b1110), do: "┣"
   defp draw_tile(0b0111), do: "┳"
   defp draw_tile(0b1011), do: "┫"
-  defp draw_tile({tile, _}), do: draw_tile(tile)
-  defp draw_tile({_tile, _, [%{pawn: pawn}]}), do: pawn
-  defp draw_tile({tile, _, _}), do: draw_tile(tile)
+  defp draw_tile({_tile, _treasure, [%{pawn: pawn}]}), do: pawn
+  defp draw_tile({tile, _treasure, _players}), do: draw_tile(tile)
 
   defp draw_treasure(nil), do: "."
   defp draw_treasure(0), do: "🔑"
@@ -297,5 +333,5 @@ defmodule Labyrinth.Board do
   defp draw_treasure(21), do: "🧪"
   defp draw_treasure(22), do: "🏹"
   defp draw_treasure(23), do: "🧩"
-  defp draw_treasure({_, treasure}), do: draw_treasure(treasure)
+  defp draw_treasure({_tile, treasure, _players}), do: draw_treasure(treasure)
 end
