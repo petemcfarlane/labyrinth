@@ -17,7 +17,7 @@ defmodule LabyrinthWeb.Router do
   scope "/", LabyrinthWeb do
     pipe_through :browser
 
-    get "/", LabyrinthWeb.LabyrinthLive, :game
+    live "/", LabyrinthLive, :game
   end
 
   # Other scopes may use custom stacks.
